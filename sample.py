@@ -43,7 +43,7 @@ parentPath = os.path.abspath("..")
 sys.path.insert(0, parentPath)# add parent folder to path so as to import common modules
 from helper import indexes2sent, gVar, gData
 import models, experiments, data, configs
-from models import DialogWAE, DialogWAE_GMP
+from models import DialogWAE, DialogWAE_GMP, DialogWAE_GMP_Eval
 from experiments import Metrics
 
 PAD_token = 0
@@ -136,6 +136,7 @@ def main(args):
     corpus = getattr(data, args.dataset+'Corpus')(data_path, wordvec_path=glove_path, wordvec_dim=conf['emb_size'])
     dials, metas = corpus.get_dialogs(), corpus.get_metas()
     test_dial, test_meta = dials.get("test"), metas.get("test")
+    
     # convert to numeric input outputs that fits into TF models
     test_loader = getattr(data, args.dataset+'DataLoader')("Test", test_dial, test_meta, conf['maxlen'])
     test_loader.epoch_init(1, conf['diaglen'], 1, shuffle=False)  
@@ -152,7 +153,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch DialogGAN for Eval')
     parser.add_argument('--data_path', type=str, default='./data/', help='location of the data corpus')
-    parser.add_argument('--dataset', type=str, default='SWDA', help='name of dataset, SWDA or DailyDial')
+    parser.add_argument('--dataset', type=str, default='DailyDial', help='name of dataset, SWDA or DailyDial')
     parser.add_argument('--model', type=str, default='DialogWAE', help='model name')
     parser.add_argument('--expname', type=str, default='basic', help='experiment name, disinguishing different parameter settings')
     parser.add_argument('--reload_from', type=int, default=40, help='directory to load models from, SWDA 8, 40, DailyDial 6, 40')

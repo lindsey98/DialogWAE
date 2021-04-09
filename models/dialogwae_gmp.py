@@ -11,7 +11,7 @@ import sys
 parentPath = os.path.abspath("..")
 sys.path.insert(0, parentPath)# add parent folder to path so as to import common modules
 from helper import gVar
-from modules import Encoder, ContextEncoder, MixVariation, Decoder      
+from modules import Encoder, ContextEncoder, MixVariation, Decoder, MixVariationFixCompo   
 from .dialogwae import DialogWAE
 
 
@@ -22,6 +22,18 @@ class DialogWAE_GMP(DialogWAE):
         self.gumbel_temp = config['gumbel_temp']
         
         self.prior_net = MixVariation(config['n_hidden'], config['z_size'], self.n_components, self.gumbel_temp) # p(e|c)
+        
+        
+class DialogWAE_GMP_Eval(DialogWAE):
+    def __init__(self, config, vocab_size, PAD_token=0):
+        super(DialogWAE_GMP_Eval, self).__init__(config, vocab_size, PAD_token)
+        self.n_components = config['n_prior_components']
+        self.gumbel_temp = config['gumbel_temp']
+        self.select_compo = config['selected_compo'] # select which component to generate
+        
+        self.prior_net = MixVariationFixCompo(config['n_hidden'], config['z_size'], self.n_components, self.gumbel_temp, self.select_compo) # p(e|c)
+
+
            
    
     

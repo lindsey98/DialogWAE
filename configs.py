@@ -31,7 +31,13 @@ def config_DialogWAE():
 
 def config_DialogWAE_GMP():
     conf=config_DialogWAE()
-    conf['n_prior_components']=3  # DailyDial 5 SWDA 3
+    conf['n_prior_components']=5  # DailyDial 5 SWDA 3
     conf['gumbel_temp']=0.1
     return conf
 
+def config_DialogWAE_GMP_Eval(selected_compo):
+    conf=config_DialogWAE()
+    conf['n_prior_components']=5  
+    conf['gumbel_temp']=0.1
+    conf['selected_compo']=selected_compo
+    return conf
