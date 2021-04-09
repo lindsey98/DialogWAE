@@ -227,7 +227,7 @@ class MixVariation(nn.Module):
         
         pi=self.pi_net(context) 
         pi=F.gumbel_softmax(pi, tau=self.gumbel_temp, hard=True, eps=1e-10)
-        pi=pi.unsqueeze(1) 
+        pi=pi.unsqueeze(1)
     
         mus=self.context_to_mu(context)
         logsigmas = self.context_to_logsigma(context) 
@@ -241,6 +241,62 @@ class MixVariation(nn.Module):
         logsigma = torch.bmm(pi, logsigmas.view(batch_size, self.n_components, self.z_size))
         return z, mu, logsigma
     
+    
+class MixVariationFixCompo(nn.Module):
+    def __init__(self, input_size, z_size, n_components, gumbel_temp=0.1, select_compo=0):
+        super(MixVariation, self).__init__()
+        self.input_size = input_size
+        self.z_size=z_size  
+        self.n_components = n_components
+        self.select_compo = select_compo
+        self.gumbel_temp=0.1
+        
+        self.pi_net = nn.Sequential(
+            nn.Linear(z_size, z_size),
+            nn.BatchNorm1d(z_size, eps=1e-05, momentum=0.1),
+            nn.Tanh(),
+            nn.Linear(z_size, n_components),
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(input_size, z_size),
+            nn.BatchNorm1d(z_size, eps=1e-05, momentum=0.1),
+            nn.Tanh(),
+            nn.Linear(z_size, z_size),
+            nn.BatchNorm1d(z_size, eps=1e-05, momentum=0.1),
+            nn.Tanh(),
+        )
+        self.context_to_mu=nn.Linear(z_size, n_components*z_size) # activation???
+        self.context_to_logsigma=nn.Linear(z_size, n_components*z_size) 
+        self.pi_net.apply(self.init_weights)
+        self.fc.apply(self.init_weights)
+        self.init_weights(self.context_to_mu)
+        self.init_weights(self.context_to_logsigma)
+        
+    def init_weights(self, m):
+        if isinstance(m, nn.Linear):        
+            m.weight.data.uniform_(-0.05, 0.05)
+            m.bias.data.fill_(0)
+
+    def forward(self, context):
+        batch_size,_=context.size()
+        context = self.fc(context)
+        
+        # TODO: change this to select specific component
+        pi=torch.zeros((batch_size, self.n_components))
+        pi[:, self.select_compo] = 1.
+        pi=pi.unsqueeze(1).to(context.device) 
+    
+        mus=self.context_to_mu(context)
+        logsigmas = self.context_to_logsigma(context) 
+        stds = torch.exp(0.5 * logsigmas)
+        
+        epsilons = gVar(torch.randn([batch_size, self.n_components*self.z_size]))
+        
+        zi = (epsilons * stds + mus).view(batch_size, self.n_components, self.z_size)
+        z = torch.bmm(pi, zi).squeeze(1)  # [batch_sz x z_sz]
+        mu = torch.bmm(pi, mus.view(batch_size, self.n_components, self.z_size))
+        logsigma = torch.bmm(pi, logsigmas.view(batch_size, self.n_components, self.z_size))
+        return z, mu, logsigma
     
 class Decoder(nn.Module):
     def __init__(self, embedder, input_size, hidden_size, vocab_size, n_layers=1):
