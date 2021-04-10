@@ -45,6 +45,7 @@ from helper import indexes2sent, gVar, gData
 import models, experiments, data, configs
 from models import DialogWAE, DialogWAE_GMP
 from experiments import Metrics
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 PAD_token = 0
 
@@ -137,20 +138,29 @@ def main(args):
     glove_path = args.data_path+'glove.twitter.27B.200d.txt'
     corpus = getattr(data, args.dataset+'Corpus')(data_path, wordvec_path=glove_path, wordvec_dim=conf['emb_size'])
     dials, metas = corpus.get_dialogs(), corpus.get_metas()
-    test_dial, test_meta = dials.get("test"), metas.get("test")
+#     valid_dial, valid_meta = dials.get("valid"), metas.get("valid")
+#     test_dial, test_meta = dials.get("test"), metas.get("test")
+    train_dial, train_meta = dials.get("train"), metas.get("train")
     
     # convert to numeric input outputs that fits into TF models
-    test_loader = getattr(data, args.dataset+'DataLoader')("Test", test_dial, test_meta, conf['maxlen'])
-    test_loader.epoch_init(1, conf['diaglen'], 1, shuffle=False)  
+#     test_loader = getattr(data, args.dataset+'DataLoader')("Test", test_dial, test_meta, conf['maxlen'])
+    # test_loader.epoch_init(1, conf['diaglen'], 1, shuffle=False)  
+#     valid_loader = getattr(data, args.dataset+'DataLoader')("Valid", valid_dial, valid_meta, conf['maxlen'])
+#     valid_loader.epoch_init(1, conf['diaglen'], 1, shuffle=False)  
+    train_loader = getattr(data, args.dataset+'DataLoader')("Train", train_dial, train_meta, conf['maxlen'])
+    train_loader.epoch_init(1, conf['diaglen'], 1, shuffle=False)  
+    
     ivocab = corpus.vocab
     vocab = corpus.ivocab
     
     metrics = Metrics(corpus.word2vec)
     
-    f_eval = open("./output/{}_{}_{}_Com{}_results.txt".format(args.model, args.expname, args.dataset, str(args.selected_compo)), "w")
+    f_eval = open("./output/{}_{}_{}_Com{}_train_results.txt".format(args.model, args.expname, args.dataset, str(args.selected_compo)), "w")
     repeat = args.n_samples
     
-    evaluate(model, metrics, test_loader, vocab, ivocab, f_eval, repeat)
+#     evaluate(model, metrics, test_loader, vocab, ivocab, f_eval, repeat)
+#     evaluate(model, metrics, valid_loader, vocab, ivocab, f_eval, repeat)
+    evaluate(model, metrics, train_loader, vocab, ivocab, f_eval, repeat)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch DialogGAN for Eval')
