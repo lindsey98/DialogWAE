@@ -242,9 +242,11 @@ class DialogWAE(nn.Module):
         self.context_encoder.eval()
         self.decoder.eval()
         
-        c = self.context_encoder(context, context_lens, utt_lens, floors)
+        c = self.context_encoder(context, context_lens, utt_lens, floors) # encode context into embedding
         c_repeated = c.expand(repeat, -1)
-        prior_z = self.sample_code_prior(c_repeated)    
+        prior_z = self.sample_code_prior(c_repeated) 
+#         print(prior_z.shape)
+#         print(prior_z)
         sample_words, sample_lens= self.decoder.sampling(torch.cat((prior_z,c_repeated),1), 
                                                          None, self.maxlen, SOS_tok, EOS_tok, "greedy") 
         return sample_words, sample_lens 

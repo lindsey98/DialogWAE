@@ -43,7 +43,7 @@ parentPath = os.path.abspath("..")
 sys.path.insert(0, parentPath)# add parent folder to path so as to import common modules
 from helper import indexes2sent, gVar, gData
 import models, experiments, data, configs
-from models import DialogWAE, DialogWAE_GMP, DialogWAE_GMP_Eval
+from models import DialogWAE, DialogWAE_GMP
 from experiments import Metrics
 
 PAD_token = 0
@@ -71,7 +71,8 @@ def evaluate(model, metrics, test_loader, vocab, ivocab, f_eval, repeat):
         f_eval.write("Target >> %s\n" % (ref_str.replace(" ' ", "'")))
         
         context, context_lens, utt_lens, floors = gVar(context), gVar(context_lens), gVar(utt_lens), gData(floors)
-        sample_words, sample_lens = model.sample(context, context_lens, utt_lens, floors, repeat, vocab["<s>"], vocab["</s>"])
+#         sample_words, sample_lens = model.sample(context, context_lens, utt_lens, floors, repeat, vocab["<s>"], vocab["</s>"])
+        sample_words, sample_lens = model.sample_fix(context, context_lens, utt_lens, floors, repeat, vocab["<s>"], vocab["</s>"])
         # nparray: [repeat x seq_len]
         pred_sents, _ = indexes2sent(sample_words, vocab, vocab["</s>"], PAD_token)
         pred_tokens = [sent.split(' ') for sent in pred_sents]
@@ -116,9 +117,10 @@ def evaluate(model, metrics, test_loader, vocab, ivocab, f_eval, repeat):
     return recall_bleu, prec_bleu, bow_extrema, bow_avg, bow_greedy, intra_dist1, intra_dist2, avg_len, inter_dist1, inter_dist2
 
 def main(args):
-    # Load the models
+    # TODO: set config here
     conf = getattr(configs, 'config_'+args.model)()
-    model=torch.load(f='./output/{}/{}/{}/models/model_epo{}.pckl'.format(args.model, args.expname, args.dataset, args.reload_from))
+
+    model=torch.load(f='./{}/{}/model_epo{}.pckl'.format('DialogWAE_GMP', args.expname, args.reload_from))
     model.eval()
     # Set the random seed manually for reproducibility.
     random.seed(args.seed)
@@ -143,9 +145,9 @@ def main(args):
     ivocab = corpus.vocab
     vocab = corpus.ivocab
     
-    metrics=Metrics(corpus.word2vec)
+    metrics = Metrics(corpus.word2vec)
     
-    f_eval = open("./output/{}/{}/{}/results.txt".format(args.model, args.expname, args.dataset), "w")
+    f_eval = open("./output/{}_{}_{}_Com{}_results.txt".format(args.model, args.expname, args.dataset, str(args.selected_compo)), "w")
     repeat = args.n_samples
     
     evaluate(model, metrics, test_loader, vocab, ivocab, f_eval, repeat)
@@ -154,13 +156,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch DialogGAN for Eval')
     parser.add_argument('--data_path', type=str, default='./data/', help='location of the data corpus')
     parser.add_argument('--dataset', type=str, default='DailyDial', help='name of dataset, SWDA or DailyDial')
-    parser.add_argument('--model', type=str, default='DialogWAE', help='model name')
+    parser.add_argument('--model', type=str, default='DialogWAE_GMP', help='model name')
     parser.add_argument('--expname', type=str, default='basic', help='experiment name, disinguishing different parameter settings')
     parser.add_argument('--reload_from', type=int, default=40, help='directory to load models from, SWDA 8, 40, DailyDial 6, 40')
     
     parser.add_argument('--n_samples', type=int, default=10, help='Number of responses to sampling')
     parser.add_argument('--sample', action='store_true', help='sample when decoding for generation')
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
+    parser.add_argument('--selected_compo', type=int, default=0, help='which component to select')
     args = parser.parse_args()
     print(vars(args))
     main(args)

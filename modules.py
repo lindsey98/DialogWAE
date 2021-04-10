@@ -243,13 +243,13 @@ class MixVariation(nn.Module):
     
     
 class MixVariationFixCompo(nn.Module):
-    def __init__(self, input_size, z_size, n_components, gumbel_temp=0.1, select_compo=0):
-        super(MixVariation, self).__init__()
+    def __init__(self, input_size, z_size, n_components, gumbel_temp, select_compo):
+        super(MixVariationFixCompo, self).__init__()
         self.input_size = input_size
         self.z_size=z_size  
         self.n_components = n_components
         self.select_compo = select_compo
-        self.gumbel_temp=0.1
+        self.gumbel_temp = 0.1
         
         self.pi_net = nn.Sequential(
             nn.Linear(z_size, z_size),
@@ -281,10 +281,11 @@ class MixVariationFixCompo(nn.Module):
         batch_size,_=context.size()
         context = self.fc(context)
         
-        # TODO: change this to select specific component
+        # change this to select specific component
         pi=torch.zeros((batch_size, self.n_components))
         pi[:, self.select_compo] = 1.
         pi=pi.unsqueeze(1).to(context.device) 
+        print(pi) # TODO: comment this out
     
         mus=self.context_to_mu(context)
         logsigmas = self.context_to_logsigma(context) 
@@ -362,3 +363,4 @@ class Decoder(nn.Module):
     
 
     
+
