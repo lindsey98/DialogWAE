@@ -1,6 +1,6 @@
 # DialogWAE
 
-It is a PyTorch implementation of the DialogWAE model described in
+This repository is for CS6101, we are investigating this paper: 
 [**DialogWAE: Multimodal Response Generation with Conditional Wasserstein Auto-Encoder**](https://arxiv.org/abs/1805.12352). 
 
 ## Dependency
@@ -37,6 +37,8 @@ Run model testing by:
 ```
 The outputs will be printed to stdout and generated responses will be saved at `results.txt` in the `./output` path.
 
+## TF-IDF
+The code for TF-IDF is TFIDF.ipynb
 
 ## References 
 If you use any source code included in this toolkit in your work, please cite the following paper:
