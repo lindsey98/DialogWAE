@@ -24,7 +24,7 @@ class DialogWAE_GMP(DialogWAE):
         
     def sample_code_prior_fix(self, c):
         # define prior net which only select a specific component
-        self.fix_prior_net = MixVariationFixCompo(self.prior_net.input_size, self.prior_net.z_size, self.prior_net.n_components, self.prior_net.gumbel_temp, select_compo=2)
+        self.fix_prior_net = MixVariationFixCompo(self.prior_net.input_size, self.prior_net.z_size, self.prior_net.n_components, self.prior_net.gumbel_temp, select_compo=4)
         
         # replace and copy weights
         for i in range(len(self.prior_net.pi_net)):
@@ -46,6 +46,14 @@ class DialogWAE_GMP(DialogWAE):
         return z 
         
     def sample_fix(self, context, context_lens, utt_lens, floors, repeat, SOS_tok, EOS_tok):    
+
+        prior_z, c_repeated = self.sample_fix_z(context, context_lens, utt_lens, floors, repeat, SOS_tok, EOS_tok)
+        
+        sample_words, sample_lens = self.decoder.sampling(torch.cat((prior_z, c_repeated),1), 
+                                                         None, self.maxlen, SOS_tok, EOS_tok, "greedy") 
+        return sample_words, sample_lens 
+
+    def sample_fix_z(self, context, context_lens, utt_lens, floors, repeat, SOS_tok, EOS_tok):
         self.context_encoder.eval()
         self.decoder.eval()
 
@@ -53,14 +61,8 @@ class DialogWAE_GMP(DialogWAE):
         c = self.context_encoder(context, context_lens, utt_lens, floors) 
         c_repeated = c.expand(repeat, -1)
         prior_z = self.sample_code_prior_fix(c_repeated) 
-
-        sample_words, sample_lens= self.decoder.sampling(torch.cat((prior_z,c_repeated),1), 
-                                                         None, self.maxlen, SOS_tok, EOS_tok, "greedy") 
-        return sample_words, sample_lens 
-
     
-    
-
+        return prior_z, c_repeated
 
            
    
