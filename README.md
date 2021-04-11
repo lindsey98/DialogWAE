@@ -3,6 +3,9 @@
 This repository is for CS6101, we are investigating this paper: 
 [**DialogWAE: Multimodal Response Generation with Conditional Wasserstein Auto-Encoder**](https://arxiv.org/abs/1805.12352). The original repository is https://github.com/guxd/DialogWAE. 
 
+## Poster
+<img src="doc/poster.jpg">
+
 ## Dependency
  - PyTorch 0.4.0
  - Python 3.6
